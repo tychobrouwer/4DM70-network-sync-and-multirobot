@@ -16,9 +16,9 @@
 %
 
 function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose1, pose2, pose3, goal1, goal2, goal3)
-    gain1 = 1; 
-    gain2 = 1;
-    gain3 = 1;
+    gain1 = 0.5; 
+    gain2 = 0.5;
+    gain3 = 0.5;
 
     thresh_scale = 2; %trial and error aanpassen
 

@@ -13,9 +13,9 @@
 
 function turtlebot_control(bot1Name, bot2Name, bot3Name)
     events = [
-        1, 7;
-        2, 7;
-        3, 7;
+        -0.5, 2;
+           0, 2;
+         0.5, 2;
     ];
 
     % Define the event distribution function
@@ -41,9 +41,9 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
     [bot3CtrlPublisher, bot3CtrlMessage] = ros2publisher(ctrlNode, bot3CtrlTopic, "geometry_msgs/Twist", 'History', 'keeplast', 'Depth', 1, 'Reliability','reliable');
     
     % Create the turtlebot and goal pose subcribers
-    bot1PoseSubscriber = ros2subscriber(ctrlNode, bot1PoseTopic, 'geometry_msgs/PoseStamped', 'History', 'keeplast', 'Depth', 1, 'Reliability','reliable');
-    bot2PoseSubscriber = ros2subscriber(ctrlNode, bot2PoseTopic, 'geometry_msgs/PoseStamped', 'History', 'keeplast', 'Depth', 1, 'Reliability','reliable');
-    bot3PoseSubscriber = ros2subscriber(ctrlNode, bot3PoseTopic, 'geometry_msgs/PoseStamped', 'History', 'keeplast', 'Depth', 1, 'Reliability','reliable');
+    bot1PoseSubscriber = ros2subscriber(ctrlNode, bot1PoseTopic, 'geometry_msgs/PoseStamped', 'History', 'keeplast', 'Depth', 1, 'Reliability','besteffort');
+    bot2PoseSubscriber = ros2subscriber(ctrlNode, bot2PoseTopic, 'geometry_msgs/PoseStamped', 'History', 'keeplast', 'Depth', 1, 'Reliability','besteffort');
+    bot3PoseSubscriber = ros2subscriber(ctrlNode, bot3PoseTopic, 'geometry_msgs/PoseStamped', 'History', 'keeplast', 'Depth', 1, 'Reliability','besteffort');
 
     % Wait for initial poses
     while (true)
@@ -66,7 +66,7 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         initPos2(1), initPos2(2), initPos2(3),...
         initPos3(1), initPos3(2), initPos3(3));
 
-    %% TurtleBot Control Loop
+    % TurtleBot Control Loop
     disp('Turtlebot Control is running...');
     while (true)
         pause(0.1);
@@ -123,18 +123,35 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
 
         [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = utils.grad_ctrl(pose1, pose2, pose3, centroids(1,:), centroids(2,:), centroids(3,:));
 
-        if ~isnan(linvel1) && ~isnan(linvel2) && ~isnan(linvel3)
-          bot1CtrlMessage.linear.x = linvel1;
-          bot1CtrlMessage.angular.z = angvel1;
-          bot1CtrlPublisher.send(bot1CtrlMessage);
-  
-          bot2CtrlMessage.linear.x = linvel2;
-          bot2CtrlMessage.angular.z = angvel2;
-          bot2CtrlPublisher.send(bot2CtrlMessage);
-  
-          bot3CtrlMessage.linear.x = linvel3;
-          bot3CtrlMessage.angular.z = angvel3;
-          bot3CtrlPublisher.send(bot3CtrlMessage);
+        thresh = 5e-2;
+        if pdist2(p1, centroids(1,:), 'euclidean') < thresh
+            bot1CtrlMessage.linear.x = 0;
+            bot1CtrlMessage.angular.z = 0;
+            bot1CtrlPublisher.send(bot1CtrlMessage);
+        elseif ~isnan(linvel1)
+            bot1CtrlMessage.linear.x = linvel1;
+            bot1CtrlMessage.angular.z = angvel1;
+            bot1CtrlPublisher.send(bot1CtrlMessage);
+        end
+
+        if pdist2(p2, centroids(2,:), 'euclidean') < thresh
+            bot2CtrlMessage.linear.x = 0;
+            bot2CtrlMessage.angular.z = 0;
+            bot2CtrlPublisher.send(bot2CtrlMessage);
+        elseif ~isnan(linvel2)
+            bot2CtrlMessage.linear.x = linvel2;
+            bot2CtrlMessage.angular.z = angvel2;
+            bot2CtrlPublisher.send(bot2CtrlMessage);
+        end
+
+        if pdist2(p3, centroids(3,:), 'euclidean') < thresh
+            bot3CtrlMessage.linear.x = 0;
+            bot3CtrlMessage.angular.z = 0;
+            bot3CtrlPublisher.send(bot3CtrlMessage);
+        elseif ~isnan(linvel3)
+            bot3CtrlMessage.linear.x = linvel3;
+            bot3CtrlMessage.angular.z = angvel3;
+            bot3CtrlPublisher.send(bot3CtrlMessage);
         end
     end
 end

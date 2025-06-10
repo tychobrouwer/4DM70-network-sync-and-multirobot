@@ -10,5 +10,4 @@ function [linvel, angvel] = control_governor(linvel, angvel)
         linvel = linvel / scale;
         angvel = angvel / scale;
     end
-        
 end

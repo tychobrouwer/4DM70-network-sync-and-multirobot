@@ -26,3 +26,24 @@ view(3);
 xlim([-5, 5])
 ylim([-10, 5])
 zlim([-8, 12])
+
+clear all;
+
+y = linspace(-20, 20, 300);
+z2 = linspace(-20, 20, 300);
+
+figure;
+z1_val = 1;
+
+% Create 3D grid
+[Y, Z2] = meshgrid(y, z2);
+
+% Calculate H at each grid point
+H = (1/4)*(Y.^4 + z1_val.^2) - 3*Y.^2 + + 4.7*Y + (1/4)*(Z2 - 2.236).^2 - 1.2499;
+
+contour(Y, Z2, H', [0, 0], 'b', 'LineWidth', 2)
+xlabel('y');
+ylabel('z_1');
+grid on;
+xlim([-10, 15])
+ylim([-5, 1])
