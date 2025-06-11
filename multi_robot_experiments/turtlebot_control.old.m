@@ -1,3 +1,4 @@
+%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%% PLEASE MAKE SURE YOUR ROS SETTINGS ARE CORRECT! %%%
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -17,14 +18,10 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         1.7331, -0.5;
     ];
 
-    % Define the event distribution function (density function)
-    density = @(xy) exp(-pdist2(xy, events(1,:), 'squaredeuclidean'))...
-                  + exp(-pdist2(xy, events(2,:), 'squaredeuclidean'))...
-                  + exp(-pdist2(xy, events(3,:), 'squaredeuclidean'));
-
-    % Voronoi coverage parameters
-    workspace_bounds = [-1, 4; -2, 2]; % [xmin, xmax; ymin, ymax]
-    grid_resolution = 0.05; % Resolution for numerical integration
+    % Define the event distribution function
+    dist = @(xy) exp(-pdist2(xy, events(1,:), 'squaredeuclidean'))...
+               + exp(-pdist2(xy, events(2,:), 'squaredeuclidean'))...
+               + exp(-pdist2(xy, events(3,:), 'squaredeuclidean'));
 
     % Initialize ROS 2
     nodeName = ['/matlab_turtlebot_control_' int2str(1000000000*rand(1))]; % Node Name
@@ -69,13 +66,10 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         initPos2(1), initPos2(2), initPos2(3),...
         initPos3(1), initPos3(2), initPos3(3));
 
-    % TurtleBot Voronoi Coverage Control Loop
-    disp('Turtlebot Traditional Voronoi Coverage Control is running...');
-    iteration = 0;
-    
+    % TurtleBot Control Loop
+    disp('Turtlebot Control is running...');
     while (true)
         pause(0.1);
-        iteration = iteration + 1;
 
         % Get the current poses of the robots
         [x, y, w] = utils.pose_subscriber_to_pos(bot1PoseSubscriber);
@@ -91,17 +85,41 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         end
 
         p1 = pose1(1:2); p2 = pose2(1:2); p3 = pose3(1:2);
+
+        % Build distance cost matrix (3 events x 3 robots)
+        costMatrix = zeros(3,3);
         robotPoses = [p1; p2; p3];
+        for i = 1:3
+            for j = 1:3
+                costMatrix(i,j) = pdist2(events(i,:), robotPoses(j,:), 'euclidean');
+            end
+        end
 
-        % Compute Voronoi cell centroids using Lloyd's algorithm
-        voronoi_centroids = compute_voronoi_centroids(robotPoses, density, workspace_bounds, grid_resolution);
+        match = matchpairs(costMatrix, 9999999999);
 
-        [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = utils.grad_ctrl(pose1, pose2, pose3, voronoi_centroids(1,:), voronoi_centroids(2,:), voronoi_centroids(3,:));
+        event_assignments = zeros(3,1);
+        for i = 1:size(match,1)
+            eventIdx = match(i,1);
+            robotIdx = match(i,2);
+            event_assignments(eventIdx) = robotIdx;
+        end
+
+        % Calculate centroids for each robot based on assigned events
+        centroids = zeros(3,2);
+        for k = 1:3
+            assigned_events = events(event_assignments == k, :);
+            if isempty(assigned_events)
+                centroids(k,:) = [NaN, NaN];
+            else
+                weights = arrayfun(@(i) dist(events(i,:)), find(event_assignments == k));
+                centroids(k,:) = sum(assigned_events .* weights, 1) / sum(weights);
+            end
+        end
+
+        [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = utils.grad_ctrl(pose1, pose2, pose3, centroids(1,:), centroids(2,:), centroids(3,:));
 
         thresh = 5e-2;
-        
-        % Control Robot 1
-        if pdist2(p1, voronoi_centroids(1,:), 'euclidean') < thresh
+        if pdist2(p1, centroids(1,:), 'euclidean') < thresh
             bot1CtrlMessage.linear.x = 0;
             bot1CtrlMessage.angular.z = 0;
             bot1CtrlPublisher.send(bot1CtrlMessage);
@@ -111,8 +129,7 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
             bot1CtrlPublisher.send(bot1CtrlMessage);
         end
 
-        % Control Robot 2
-        if pdist2(p2, voronoi_centroids(2,:), 'euclidean') < thresh
+        if pdist2(p2, centroids(2,:), 'euclidean') < thresh
             bot2CtrlMessage.linear.x = 0;
             bot2CtrlMessage.angular.z = 0;
             bot2CtrlPublisher.send(bot2CtrlMessage);
@@ -122,8 +139,7 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
             bot2CtrlPublisher.send(bot2CtrlMessage);
         end
 
-        % Control Robot 3
-        if pdist2(p3, voronoi_centroids(3,:), 'euclidean') < thresh
+        if pdist2(p3, centroids(3,:), 'euclidean') < thresh
             bot3CtrlMessage.linear.x = 0;
             bot3CtrlMessage.angular.z = 0;
             bot3CtrlPublisher.send(bot3CtrlMessage);
@@ -132,73 +148,5 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
             bot3CtrlMessage.angular.z = angvel3;
             bot3CtrlPublisher.send(bot3CtrlMessage);
         end
-    end
-end
-
-function centroids = compute_voronoi_centroids(robotPoses, density_func, workspace_bounds, grid_resolution)
-    % Compute Voronoi cell centroids using Lloyd's algorithm
-    % Traditional Voronoi coverage control implementation
-    %
-    % Inputs:
-    %   robotPoses: Robot positions [N x 2]
-    %   density_func: Function handle for density distribution
-    %   workspace_bounds: Workspace boundaries [2 x 2] = [xmin,xmax; ymin,ymax]
-    %   grid_resolution: Grid resolution for numerical integration
-    %
-    % Outputs:
-    %   centroids: Centroid of each robot's Voronoi cell [N x 2]
-
-    num_robots = size(robotPoses, 1);
-    
-    % Create grid for numerical integration
-    x_range = workspace_bounds(1,1):grid_resolution:workspace_bounds(1,2);
-    y_range = workspace_bounds(2,1):grid_resolution:workspace_bounds(2,2);
-    [X, Y] = meshgrid(x_range, y_range);
-    grid_points = [X(:), Y(:)];
-    num_points = size(grid_points, 1);
-    
-    % Compute Voronoi partition
-    % For each grid point, find the closest robot
-    distances = pdist2(grid_points, robotPoses, 'euclidean');
-    [~, voronoi_assignment] = min(distances, [], 2);
-    
-    % Compute density at each grid point
-    density_values = zeros(num_points, 1);
-    for i = 1:num_points
-        density_values(i) = density_func(grid_points(i, :));
-    end
-    
-    % Compute centroid for each robot's Voronoi cell
-    centroids = zeros(num_robots, 2);
-    
-    for robot_idx = 1:num_robots
-        % Find grid points in this robot's Voronoi cell
-        cell_points = grid_points(voronoi_assignment == robot_idx, :);
-        cell_densities = density_values(voronoi_assignment == robot_idx);
-        
-        if isempty(cell_points)
-            % If no points assigned, use current robot position
-            centroids(robot_idx, :) = robotPoses(robot_idx, :);
-            continue;
-        end
-        
-        % Compute mass and first moment for centroid calculation
-        total_mass = sum(cell_densities) * grid_resolution^2;
-        
-        if total_mass > 0
-            % Weighted centroid: ∫∫ p(x,y) * [x,y] dx dy / ∫∫ p(x,y) dx dy
-            weighted_x = sum(cell_points(:,1) .* cell_densities) * grid_resolution^2;
-            weighted_y = sum(cell_points(:,2) .* cell_densities) * grid_resolution^2;
-            
-            centroids(robot_idx, 1) = weighted_x / total_mass;
-            centroids(robot_idx, 2) = weighted_y / total_mass;
-        else
-            % If no density in cell, use geometric centroid
-            centroids(robot_idx, :) = mean(cell_points, 1);
-        end
-        
-        % Ensure centroid is within workspace bounds
-        centroids(robot_idx, 1) = max(workspace_bounds(1,1), min(workspace_bounds(1,2), centroids(robot_idx, 1)));
-        centroids(robot_idx, 2) = max(workspace_bounds(2,1), min(workspace_bounds(2,2), centroids(robot_idx, 2)));
     end
 end

@@ -13,6 +13,7 @@ function demo_threeturtlebot_simulator()
 % Authors: Omur Arslan, o.arslan@tue.nl
 % Created: June 02, 2023
 % Modified: June 03, 2024 (Visualization is added)
+% Modified: June 11, 2025 (Added pose setting capability)
 
     %% ROS Node Settings
     % Register the leader-follower node at the ROS master
@@ -45,9 +46,14 @@ function demo_threeturtlebot_simulator()
         
         threeturtlebot(k).ctrlTopic = sprintf('/%s/cmd_vel_ctrl', threeturtlebot(k).name);
         % Create a turtlebot control subscriber
-        threeturtlebot(k).ctrlSubscriber = ros2subscriber(simulatorNode, threeturtlebot(k).ctrlTopic, 'geometry_msgs/Twist',@(msg) turtlebot_ctrl_callback(msg, threeturtlebot(k)) , ...
+        threeturtlebot(k).ctrlSubscriber = ros2subscriber(simulatorNode, threeturtlebot(k).ctrlTopic, 'geometry_msgs/Twist',...
+            @(msg) turtlebot_ctrl_callback(msg, threeturtlebot(k)) , ...
             'History','keeplast','Depth', 1, 'Reliability','besteffort');
-
+        
+        threeturtlebot(k).poseSetTopic = sprintf('/%s/set_pose', threeturtlebot(k).name);
+        threeturtlebot(k).poseSetSubscriber = ros2subscriber(simulatorNode, threeturtlebot(k).poseSetTopic, 'geometry_msgs/PoseStamped',...
+            @(msg) turtlebot_pose_set_callback(msg, threeturtlebot(k)) , ...
+            'History','keeplast','Depth', 1, 'Reliability','reliable');
     end
     
     % Start Visualization
@@ -135,8 +141,11 @@ function [linear_velocity, angular_velocity] = turtlebot_get_velocity(velocity)
 end
 
 function turtlebot_ctrl_callback(msg, turtlebot)
-% Callback function for turtlebot control topic
-    turtlebot.velocity.msg = msg; 
+    turtlebot.velocity.msg = msg;
+end
+
+function turtlebot_pose_set_callback(msg, turtlebot)
+    turtlebot.pose.msg = msg;
 end
 
 %% Turtlebot Simulator Dynamics & Solver
@@ -207,4 +216,3 @@ function plot_handle = turtlebot_plot(turtlebot)
     end
 
 end
-
