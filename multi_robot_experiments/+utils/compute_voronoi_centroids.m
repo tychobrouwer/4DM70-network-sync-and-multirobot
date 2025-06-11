@@ -18,7 +18,6 @@ function [centroids, density_map] = compute_voronoi_centroids(robotPoses, densit
     y_range = workspace_bounds(2,1):grid_resolution:workspace_bounds(2,2);
     [X, Y] = meshgrid(x_range, y_range);
     grid_points = [X(:), Y(:)];
-    num_points = size(grid_points, 1);
     
     % Compute Voronoi partition
     % For each grid point, find the closest robot
@@ -26,13 +25,9 @@ function [centroids, density_map] = compute_voronoi_centroids(robotPoses, densit
     [~, voronoi_assignment] = min(distances, [], 2);
     
     % Compute density at each grid point
-    density_values = zeros(num_points, 1);
-    for i = 1:num_points
-        density_values(i) = density_func(grid_points(i, :));
-    end
+    density_values =  density_func(grid_points);
     density_map = reshape(density_values, size(X));
 
-    
     % Compute centroid for each robot's Voronoi cell
     centroids = zeros(num_robots, 2);
     

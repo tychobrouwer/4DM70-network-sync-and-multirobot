@@ -21,9 +21,7 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
     % cleanupObj = onCleanup(@() save('turtlebot_sim_data.mat', "logData"));
 
     % Define the event distribution function (density function)
-    density = @(xy) exp(-pdist2(xy, events(1,:), 'squaredeuclidean'))...
-                  + exp(-pdist2(xy, events(2,:), 'squaredeuclidean'))...
-                  + exp(-pdist2(xy, events(3,:), 'squaredeuclidean'));
+    density = @(xy) sum(exp(-pdist2(xy, events, 'squaredeuclidean')), 2);
 
     % Voronoi coverage parameters
     workspace_bounds = [-5, 5; -5, 5]; % [xmin, xmax; ymin, ymax]
