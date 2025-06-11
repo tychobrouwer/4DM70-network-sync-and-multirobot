@@ -5,16 +5,17 @@
 % to guide the robots towards their goals while avoiding collisions with
 % each other.
 %
-% @param pose1: The pose of the first robot [x1, y1, theta1].
-% @param pose2: The pose of the second robot [x2, y2, theta2].
-% @param pose3: The pose of the third robot [x3, y3, theta3].
-% @param goal1: The goal position for the first robot [gx1, gy1].
-% @param goal2: The goal position for the second robot [gx2, gy2].
-% @param goal3: The goal position for the third robot [gx3, gy3].
+% Inputs:
+%   pose1: The pose of the first robot [x1, y1, theta1].
+%   pose2: The pose of the second robot [x2, y2, theta2].
+%   pose3: The pose of the third robot [x3, y3, theta3].
+%   goal1: The goal position for the first robot [gx1, gy1].
+%   goal2: The goal position for the second robot [gx2, gy2].
+%   goal3: The goal position for the third robot [gx3, gy3].
 %
-% @return ctrlCmds: The control commands for the three robots
+% Outputs:
+%   ctrlCmds: The control commands for the three robots
 %
-
 function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose1, pose2, pose3, goal1, goal2, goal3)
     gain1 = 0.5; 
     gain2 = 0.5;
