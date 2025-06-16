@@ -17,14 +17,14 @@
 %   ctrlCmds: The control commands for the three robots
 %
 function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose1, pose2, pose3, goal1, goal2, goal3)
-    gain1 = 0.5; 
-    gain2 = 0.5;
-    gain3 = 0.5;
+    gain1 = 8; 
+    gain2 = 8;
+    gain3 = 8;
 
-    thresh_scale = 2; %trial and error aanpassen
+    thresh_scale = 5; %trial and error aanpassen
 
-    wAB = 1;    % B should avoid A
-    wAC = 1;    % C should avoid A
+    wAB = 0.75;    % B should avoid A
+    wAC = 0.75;    % C should avoid A
     wBC = 0.5;  % C should avoid B
 
     % Collision-Avoidance Functions & Gradients
@@ -51,10 +51,13 @@ function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose
 
         gradVA = attractive_grad(xA, goalA, gainA);
         % Full gradient
-        num = (1 + thresh_scale*W)^2 * gradVA * thresh_scale*W - Vsum * thresh_scale * (1 + thresh_scale*W) * gradW;
-        denom = (thresh_scale^2 * W^2);
+        % num = (1 + thresh_scale*W)^2 * gradVA * thresh_scale*W - Vsum * thresh_scale * (1 + thresh_scale*W) * gradW;
+        % denom = (thresh_scale^2 * W^2);
 
-        grad = -num / denom;  % Negative gradient descent
+        % grad = -num / denom;  % Negative gradient descent
+        scaling = 1 / (1 + thresh_scale * W);  
+        grad = -gradVA + scaling * gradW;
+
     end
 
     % Compute gradients for each robot

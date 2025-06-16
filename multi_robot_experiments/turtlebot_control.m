@@ -17,8 +17,8 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         1.7331, -0.5;
     ];
 
-    % logData = struct('timestamp', [], 'positions', [], 'centroids', [], 'density_map', []);
-    % cleanupObj = onCleanup(@() save('turtlebot_sim_data.mat', "logData"));
+    logData = utils.log_data_handle();
+    cleanupObj = onCleanup(@() utils.save_log(logData));
 
     % Define the event distribution function (density function)
     density = @(xy) sum(exp(-pdist2(xy, events, 'squaredeuclidean')), 2);
@@ -72,8 +72,8 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
 
     % TurtleBot Voronoi Coverage Control Loop
     disp('Turtlebot Traditional Voronoi Coverage Control is running...');
-    
-    while (true)
+
+    while true
         pause(0.1);
 
         % Get the current poses of the robots
@@ -95,10 +95,10 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         % Compute Voronoi cell centroids using Lloyd's algorithm
         [centroids, density_map] = utils.compute_voronoi_centroids(robotPoses, density, workspace_bounds, grid_resolution);
 
-        % logData.timestamp(end+1) = now;
-        % logData.positions(end+1, :, :) = robotPoses;
-        % logData.centroids(end+1, :, :) = centroids;
-        % logData.density_map{end+1} = density_map;
+        logData.timestamp(end+1) = now;
+        logData.positions(end+1, :, :) = robotPoses;
+        logData.centroids(end+1, :, :) = centroids;
+        logData.density_map{end+1} = density_map;
 
         [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = utils.grad_ctrl(pose1, pose2, pose3, centroids(1,:), centroids(2,:), centroids(3,:));
 
