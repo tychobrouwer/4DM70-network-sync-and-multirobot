@@ -30,8 +30,8 @@ function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose
     % Collision-Avoidance Functions & Gradients
     attractive_func = @(x, goal, gain) 0.5*gain*norm(x(:)-goal(:))^2;
     attractive_grad = @(x, goal, gain)  gain*(x(:) - goal(:));
-    repulsive_func = @(xA, xB) 0.5*norm(xA(:)-xB(:))^2;
-    repulsive_grad = @(xA, xB) (xA(:) - xB(:));
+    repulsive_func = @(xA, xB) 0.5*norm(xA(:)-xB(:)-2*0.2)^2;
+    repulsive_grad = @(xA, xB) (xA(:) - xB(:)-2*0.2);
 
     function grad = compute_grad(xA, xB, xC, goalA, goalB, goalC, gainA, gainB, gainC)
         VA = attractive_func(xA, goalA, gainA);

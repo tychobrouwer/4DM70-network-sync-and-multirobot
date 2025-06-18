@@ -23,18 +23,18 @@ function demo_threeturtlebot_simulator()
     % Turtlebot 1
     threeturtlebot(1).name = 'turtlebot_red';
     threeturtlebot(1).color = [1 0 0]*0.8;
-    threeturtlebot(1).pose =  core_ros2tools.ROS2MessageHandle(turtlebot_set_pose(1.0, 2.0, pi/2)); %[x(m), y(m), theta (rad)]
+    threeturtlebot(1).pose =  core_ros2tools.ROS2MessageHandle(turtlebot_set_pose(3.06, -2.80, 2.2)); %[x(m), y(m), theta (rad)]
     threeturtlebot(1).velocity = core_ros2tools.ROS2MessageHandle(turtlebot_set_velocity(0.0, 0.0)); %[linear_velocity (m/s), angular_velocity(rad/s)]
     % Turtlebot 2
     threeturtlebot(2).name = 'turtlebot_green';
     threeturtlebot(2).color = [0 1 0]*0.8;
-    threeturtlebot(2).pose = core_ros2tools.ROS2MessageHandle(turtlebot_set_pose(2.0, -3.0, pi/2)); % [x(m), y(m), theta (rad)]
+    threeturtlebot(2).pose = core_ros2tools.ROS2MessageHandle(turtlebot_set_pose(2.50, -2.21, 2.2)); % [x(m), y(m), theta (rad)]
     threeturtlebot(2).velocity = core_ros2tools.ROS2MessageHandle(turtlebot_set_velocity(0.0, 0.0)); %[linear_velocity (m/s), angular_velocity(rad/s)]
 
     % Turtlebot 3
     threeturtlebot(3).name = 'turtlebot_blue';
     threeturtlebot(3).color = [0 0 1]*0.8 + 0.2;     
-    threeturtlebot(3).pose = core_ros2tools.ROS2MessageHandle(turtlebot_set_pose(3.0, -1.0, pi/2)); % [x(m), y(m), theta (rad)]
+    threeturtlebot(3).pose = core_ros2tools.ROS2MessageHandle(turtlebot_set_pose(2.77, -2.51, 2.2)); % [x(m), y(m), theta (rad)]
     threeturtlebot(3).velocity = core_ros2tools.ROS2MessageHandle(turtlebot_set_velocity(0.0, 0.0)); %[linear_velocity (m/s), angular_velocity(rad/s)]
     
     for k = 1:numel(threeturtlebot)

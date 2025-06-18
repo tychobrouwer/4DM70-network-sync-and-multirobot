@@ -12,9 +12,9 @@
 
 function turtlebot_control(bot1Name, bot2Name, bot3Name)
     events = [
-        2.5774,    0;
-        1.7331,  0.5;
-        1.7331, -0.5;
+        2.5774-1,    0;
+        1.7331-1,  0.5;
+        1.7331-1, -0.5;
     ];
 
     logData = utils.log_data_handle();
@@ -127,15 +127,15 @@ function turtlebot_control(bot1Name, bot2Name, bot3Name)
         end
 
         % Control Robot 3
-        if pdist2(p3, centroids(3,:), 'euclidean') < thresh
+        % if pdist2(p3, centroids(3,:), 'euclidean') < thresh
             bot3CtrlMessage.linear.x = 0;
             bot3CtrlMessage.angular.z = 0;
             bot3CtrlPublisher.send(bot3CtrlMessage);
-        elseif ~isnan(linvel3)
-            bot3CtrlMessage.linear.x = linvel3;
-            bot3CtrlMessage.angular.z = angvel3;
-            bot3CtrlPublisher.send(bot3CtrlMessage);
-        end
+        % elseif ~isnan(linvel3)
+        %     bot3CtrlMessage.linear.x = linvel3;
+        %     bot3CtrlMessage.angular.z = angvel3;
+        %     bot3CtrlPublisher.send(bot3CtrlMessage);
+        % end
     end
 end
 
