@@ -41,8 +41,7 @@ function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose
 
         VAB = repulsive_func(xA, xB);
         VAC = repulsive_func(xA, xC);
-        VBC = repulsive_func(xB, xC);
-        W = wAB*VAB + wAC*VAC + wBC*VBC;
+        W = wAB*VAB + wAC*VAC;
 
         % Gradient of W w.r.t. xA
         grad_VAB = repulsive_grad(xA, xB);
@@ -57,7 +56,6 @@ function [linvel1, angvel1, linvel2, angvel2, linvel3, angvel3] = grad_ctrl(pose
         % grad = -num / denom;  % Negative gradient descent
         scaling = 1 / (1 + thresh_scale * W);  
         grad = -gradVA + scaling * gradW;
-
     end
 
     % Compute gradients for each robot
